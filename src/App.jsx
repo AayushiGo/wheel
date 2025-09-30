@@ -1,22 +1,13 @@
-import React, { useEffect, useRef, useState } from 'react';
-
-import gsap from 'gsap';
+import React, { useEffect, useRef, useState } from "react";
+import gsap from "gsap";
 
 const yearsData = [
-  {
-    year: '1983',
-    title: 'Silicom France',
-    desc: 'Silicom is the oldest cybersecurity consulting company in France',
-  },
-  {
-    year: '2019',
-    title: 'Expansion',
-    desc: 'The company expanded into global cybersecurity markets.',
-  },
-  { year: '2021', title: 'Innovation', desc: 'Introduced AI-driven security solutions.' },
-  { year: '2022', title: 'Recognition', desc: 'Awarded top cybersecurity firm in Europe.' },
-  { year: '2023', title: 'Growth', desc: 'Doubled its workforce to support global clients.' },
-  { year: '2024', title: 'Future', desc: 'Expanding into next-gen blockchain security.' },
+  { year: "1983", title: "Silicom France", desc: "Silicom is the oldest cybersecurity consulting company in France" },
+  { year: "2019", title: "Expansion", desc: "The company expanded into global cybersecurity markets." },
+  { year: "2021", title: "Innovation", desc: "Introduced AI-driven security solutions." },
+  { year: "2022", title: "Recognition", desc: "Awarded top cybersecurity firm in Europe." },
+  { year: "2023", title: "Growth", desc: "Doubled its workforce to support global clients." },
+  { year: "2024", title: "Future", desc: "Expanding into next-gen blockchain security." },
 ];
 
 const App = () => {
@@ -31,10 +22,9 @@ const App = () => {
   const lastScrollTime = useRef(0);
 
   useEffect(() => {
-    // Set initial rotation
     gsap.set(yearRef.current, {
       rotation: -activeIndex * angleStep,
-      transformOrigin: '50% 50%',
+      transformOrigin: "50% 50%",
     });
 
     const handleWheel = (e) => {
@@ -42,11 +32,8 @@ const App = () => {
 
       const currentTime = Date.now();
       const timeDiff = currentTime - lastScrollTime.current;
-
-      
       if (timeDiff < 500) return;
-
-      if (isScrolling.current) return; // prevent multiple scrolls at once
+      if (isScrolling.current) return;
 
       isScrolling.current = true;
       lastScrollTime.current = currentTime;
@@ -55,28 +42,20 @@ const App = () => {
 
       setActiveIndex((prevIndex) => {
         let newIndex = prevIndex + direction;
+        if (newIndex < 0) newIndex = 0;
+        if (newIndex >= yearsData.length) newIndex = yearsData.length - 1;
 
-        // Stop at boundaries - no looping
-        if (newIndex < 0) {
-          newIndex = 0; // Stop at first year (1983)
-        }
-        if (newIndex >= yearsData.length) {
-          newIndex = yearsData.length - 1; // Stop at last year (2024)
-        }
-
-        // Only animate if the index actually changed
         if (newIndex !== prevIndex) {
           gsap.to(yearRef.current, {
             rotation: -newIndex * angleStep,
-            transformOrigin: '50% 50%',
-            ease: 'power2.out',
+            transformOrigin: "50% 50%",
+            ease: "power2.out",
             duration: 1.5,
             onComplete: () => {
               isScrolling.current = false;
             },
           });
         } else {
-          // If no change, just reset the scrolling flag
           isScrolling.current = false;
         }
 
@@ -84,57 +63,73 @@ const App = () => {
       });
     };
 
-    window.addEventListener('wheel', handleWheel, { passive: false });
-    return () => {
-      window.removeEventListener('wheel', handleWheel);
-    };
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    return () => window.removeEventListener("wheel", handleWheel);
   }, [angleStep]);
 
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center gap-10 bg-black font-['Gilroy'] text-white">
       {/* Wheel */}
-      <div className='z-50 mb-8 flex items-center justify-center'>
-        {/* Outer circle */}
-        <div className='relative  flex h-[30rem] w-[30rem] items-center justify-center rounded-full border-[3rem] border-gray-900'>
-          {/* Inner year circle */}
-          <div
-            ref={yearRef}
-            className='relative rounded-full'
-            style={{
-              width: `${size}px`,
-              height: `${size}px`,
-            }}
-          >
+      <div className="z-50 flex items-center justify-center">
+        <div className="relative flex h-[30rem] w-[30rem] items-center justify-center rounded-full border-[3rem] border-gray-900">
+          {/* Rotating inner circle */}
+          <div ref={yearRef} className="relative rounded-full" style={{ width: `${size}px`, height: `${size}px` }}>
             {yearsData.map((data, i) => {
               const angle = i * angleStep - 270;
-              const x = center + radius * Math.cos((angle * Math.PI) / 180);
-              const y = center + radius * Math.sin((angle * Math.PI) / 180);
+
+              // Year position
+              const yearX = center + radius * Math.cos((angle * Math.PI) / 180);
+              const yearY = center + radius * Math.sin((angle * Math.PI) / 180);
+
+              // Opacity for fading text
+              const angleDiff = Math.abs(i - activeIndex) * Math.abs(angleStep);
+              const opacity = Math.max(0, 1 - angleDiff / 90);
+
+              // Square position (slightly outside)
+              const squareRadius = radius + 115;
+              const squareX = center + squareRadius * Math.cos((angle * Math.PI) / 180);
+              const squareY = center + squareRadius * Math.sin((angle * Math.PI) / 180);
 
               return (
-                <div
-                  key={i}
-                  className={`absolute text-xl font-bold transition-colors duration-300 ${
-                    i === activeIndex ? 'text-white' : 'text-gray-700'
-                  }`}
-                  style={{
-                    left: `${x}px`,
-                    top: `${y}px`,
-                    transform: `translate(-50%, -50%) rotate(${angle}deg)`,
-                  }}
-                >
-                  {data.year}
-                </div>
+                <React.Fragment key={i}>
+                  {/* Year text */}
+                  <div
+                    className="absolute text-xl font-bold transition-colors duration-300"
+                    style={{
+                      left: `${yearX}px`,
+                      top: `${yearY}px`,
+                      transform: `translate(-50%, -50%) rotate(${angle}deg)`,
+                      opacity: opacity,
+                      color: i === activeIndex ? "white" : "#7c7c7c",
+                    }}
+                  >
+                    {data.year}
+                  </div>
+
+                  {/* Rotating square */}
+                  <div
+                    className={`absolute w-2 h-2 rounded-full transition-all duration-300 ${
+                      i === activeIndex ? "bg-purple-200 w-3 h-3" : "bg-gray-700"
+                    }`}
+                    style={{
+                      left: `${squareX}px`,
+                      top: `${squareY}px`,
+                      transform: "translate(-50%, -50%)",
+                    }}
+                  ></div>
+                </React.Fragment>
               );
             })}
           </div>
         </div>
-         
       </div>
 
+      <div className="w-3 h-3 rounded-full z-50 -mt-5 bg-purple-600"></div>
+
       {/* Content section */}
-      <div className='px-10 text-center'>
-        <h2 className='mb-4 text-3xl font-semibold'>{yearsData[activeIndex].title}</h2>
-        <p className='text-lg text-gray-300'>{yearsData[activeIndex].desc}</p>
+      <div className="px-10 text-center">
+        <h2 className="mb-4 text-3xl font-semibold">{yearsData[activeIndex].title}</h2>
+        <p className="text-lg text-gray-300">{yearsData[activeIndex].desc}</p>
       </div>
     </div>
   );
